@@ -1,227 +1,176 @@
 # HealWise 🩺
 
 > **"Care doesn't end when the patient leaves the clinic."**  
-> *Health Tech & Human Wellbeing | 3-Day Hackathon Project*
+> *Health Tech & Human Wellbeing | AI-Powered Post-Consultation Care Loop*
 
 ---
 
 ## 📌 Project Overview
-**HealWise** is an AI-powered post-consultation care companion tailored for rural, elderly, and multilingual patients. It decodes medical prescriptions into plain-language, spoken instructions across regional Indian languages, plots an automatic dosage calendar, and maintains a doctor-supervised follow-up check-in loop.
+**HealWise** is an AI-powered healthcare companion connecting doctors and patients after clinic consultations. It eliminates medication confusion by translating complex clinical notes into structured dosage schedules, tracks daily medication adherence with an interactive calendar, enables verified specialist discovery, and maintains an adaptive doctor check-in loop to flag recovering or deteriorating patients.
 
-### 🌟 Core Capabilities
-1. **Prescription Parsing & Simplification**: Extracts medications, generic (salt) equivalents, dosages, frequency, and warnings using Google Gemini.
-2. **Multilingual Audio (TTS)**: Delivers spoken explanations in Hindi (`hi`), Marathi (`mr`), Tamil (`ta`), Telugu (`te`), and English (`en`) via server-side gTTS (with Konkani falling back to Marathi/Hindi).
-3. **Visual Medication Calendar**: Schedules daily dosage events (morning, afternoon, night) with `react-big-calendar`.
-4. **Adaptive Doctor-in-the-Loop Check-ins**: 
-   - Supports both symptom progression (`Better / Same / Worse`) and side-effect screening (`Yes / No`).
-   - Dynamically triggers progression queries when patients report `"Same"` or `"Worse"`.
-   - Triages patient status on a doctor dashboard (`Green` / `Amber` / `Red`).
-5. **Safety-First AI**: Explicitly emits `"unclear"` for illegible handwriting instead of guessing dosages; displays persistent medical disclaimers; keeps original prescription text side-by-side.
-6. **Failsafe Demo Mode**: Includes 1-click role switching (`Doctor` / `Patient`) and pre-loaded sample prescriptions to guarantee seamless live presentations without network or auth blockers.
+---
+
+## 🌟 Core Features & Wireframe Modules
+
+### 1. 🔐 Supabase Authentication & Role Access
+* **Sign In & Sign Up** modal powered by **Supabase Auth**.
+* Supports both **Patient** and **Doctor** roles with tailored interfaces.
+* **1-Click Instant Demo** buttons (`Panduji (Patient)` & `Dr. Ananya (Doctor)`) for rapid evaluation.
+
+### 2. 📅 Patient Care Dashboard
+* **Patient Profile Card**: Displays circular avatar, user name (`Panduji`), age, gender, active medical condition, and an **`[Edit Profile]`** modal.
+* **Daily Medication Checklist**: Interactive task cards (`Take Dolo 650 morning`) with one-tap **`[✓]` (Taken)** and **`[✕]` (Missed)** logging.
+* **Kalender Grid**: Monthly schedule showing active medication days, doses taken, and upcoming check-ins.
+
+### 3. 🔍 Doctor Directory (`Search for dr`)
+* Top search bar filtering by name, qualification, or hospital.
+* Category pills for specialties (Cardiology, General Physician, ENT, Pediatrics, Orthopedics).
+* Detailed doctor cards displaying qualifications (`MBBS, MD`), clinic locations, consultation fees, and **highlighted specialty tags**.
+
+### 4. 📝 Doctor Follow-up Check-in (`Quiz`)
+* Interactive post-visit questionnaire matching clinical follow-up protocols:
+  * **Question 1**: Adherence check (`Yes` / `No`).
+  * **Question 2**: Pain & symptom severity scale (`Normal` / `Mild` / `Severe`).
+  * **Question 3**: Side effects and medication tolerance screening.
+* **Draft Saving**: Save progress locally with `[Save Draft]`.
+* **Clinical Triage Submission**: Instant AI classification into 🟢 **Green (Stable)**, 🟡 **Amber (Review)**, or 🔴 **Red (Urgent Alert)** flags.
+
+### 5. 💊 AI Prescription & Clinical Note Simplifier
+* Simplifies prescription text and abbreviations (`OD`, `BD`, `TDS`, `PC`, `AC`).
+* Extracts active generic (salt) chemical equivalents, dosage schedules, food interactions, and safety precautions.
+* **Sync to Calendar**: 1-click button to import parsed medicines directly into your daily tracker.
+
+### 6. 👨‍⚕️ Doctor Care Triage & Patient Registry
+* **Triage Dashboard**: Priority patient queue sorting acute 🔴 **Red Alerts** to the top with automated clinical summaries and a direct **`[Call Patient]`** button.
+* **Clinic Patient Registry**: Searchable roster of registered clinic patients, active diagnoses, and consultation histories.
 
 ---
 
 ## 📂 Repository Architecture
 
 ```text
-healwise/
+HealWise/
 ├── backend/
-│   ├── main.py              # FastAPI app (/analyze, /checkin-questions, /summarize, /tts)
-│   ├── requirements.txt     # fastapi, uvicorn, python-multipart, google-genai, gtts, pydantic
+│   ├── main.py              # FastAPI app (/analyze, /checkin-questions, /summarize-checkin, /chat)
+│   ├── requirements.txt     # fastapi, uvicorn, google-genai, pydantic, python-dotenv
 │   └── .env.example         # GEMINI_API_KEY, GEMINI_MODEL, ALLOWED_ORIGINS
 ├── frontend/
 │   ├── src/
-│   │   ├── components/      # Upload, MedicineCard, CalendarView, CheckinForm, Dashboard, DemoBar
-│   │   ├── pages/           # Login, DoctorHome, PatientHome
-│   │   └── lib/             # api.js, supabase.js, demoData.js
+│   │   ├── components/
+│   │   │   ├── AuthView.jsx             # Supabase Login & Sign Up screen
+│   │   │   ├── Sidebar.jsx              # Navigation with 1-click Role Switcher
+│   │   │   ├── DashboardView.jsx        # Patient Profile, Med Tasks (✓/✕) & Kalender
+│   │   │   ├── DoctorDirectoryView.jsx  # Search for Doctor & Specialty Cards
+│   │   │   ├── QuizView.jsx             # Doctor Follow-up Questionnaire (Yes/No, Normal/Mild/Severe)
+│   │   │   ├── PrescriptionStudioView.jsx # AI Note Simplifier & Calendar Sync
+│   │   │   ├── DoctorDashboard.jsx      # Doctor Triage Priority Queue (Red/Amber/Green)
+│   │   │   ├── DoctorPatientsView.jsx   # Clinic Patient Registry
+│   │   │   └── EditProfileModal.jsx     # Profile editor modal
+│   │   ├── lib/
+│   │   │   ├── api.js                   # Backend API client with offline fallback
+│   │   │   ├── supabase.js              # Supabase Auth client & session manager
+│   │   │   └── demoData.js              # Presets and mock patient records
+│   │   ├── App.jsx                      # Main app state orchestrator
+│   │   ├── index.css                    # Tailwind CSS directives
+│   │   └── main.jsx                     # React entry point
 │   ├── package.json
-│   ├── vercel.json          # SPA route rewrites for client-side navigation
-│   └── .env.example         # VITE_API_URL, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
-├── HealWise_Project_Plan.md # Original 3-day hackathon plan
-└── README.md                # Project documentation & developer guide
+│   ├── vite.config.js
+│   ├── tailwind.config.js
+│   ├── index.html
+│   └── .env.example
+├── .gitignore
+└── README.md
 ```
 
 ---
 
-## 🛠️ Tech Stack & Service Decisions
+## 🛠️ Tech Stack
 
-| Layer | Choice | Rationale & Configuration |
+| Layer | Choice | Rationale |
 |---|---|---|
-| **Frontend** | React (Vite) + Tailwind CSS | Rapid component building with responsive mobile layout |
-| **Backend** | Python + FastAPI + Uvicorn | Lightweight, asynchronous REST API with auto-generated docs |
-| **AI / OCR** | `gemini-2.0-flash` | Generous free tier limits (15 RPM, 1,500 RPD), fast inference, multimodal OCR |
-| **Text-to-Speech** | gTTS via `GET /tts` | Direct browser `<audio src="...">` streaming without complex blob decoding |
-| **Database & Auth** | Supabase (PostgreSQL + Auth) | Free hosted database with 1-click Demo Switcher fallback |
-| **Calendar** | `react-big-calendar` + `date-fns` | Visual daily dosage scheduling |
-| **Hosting** | Vercel (Frontend) + Render (Backend) | Free tier cloud deployment with pre-warming protocol |
+| **Frontend** | React (Vite) + Tailwind CSS | Rapid, component-driven responsive dashboard |
+| **Backend** | Python + FastAPI + Uvicorn | High-performance asynchronous REST API |
+| **Database & Auth** | Supabase (PostgreSQL + Auth) | User authentication and relational data storage |
+| **AI Engine** | Google Gemini (`gemini-2.0-flash`) | Fast inference, structured extraction & risk triage |
+
+---
+
+## 🔑 Environment Setup
+
+### 1. Frontend (`frontend/.env`)
+Copy `frontend/.env.example` to `frontend/.env`:
+```env
+VITE_API_URL=http://localhost:8000
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_or_publishable_key
+```
+
+### 2. Backend (`backend/.env`)
+Copy `backend/.env.example` to `backend/.env`:
+```env
+GEMINI_API_KEY=your_google_gemini_api_key
+GEMINI_MODEL=gemini-2.0-flash
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+PORT=8000
+```
+
+---
+
+## 🗄️ Supabase SQL Schema
+
+Execute the following in your **Supabase SQL Editor**:
+
+```sql
+-- 1. Profiles Table linked to Supabase Auth
+create table if not exists public.profiles (
+  id uuid references auth.users on delete cascade primary key,
+  name text,
+  role text check (role in ('patient', 'doctor')) default 'patient',
+  gender text default 'Male',
+  age int default 58,
+  condition text default 'General Health',
+  created_at timestamptz default now()
+);
+
+-- 2. Follow-up Check-ins Table
+create table if not exists public.checkins (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade,
+  answers jsonb not null,
+  status text check (status in ('green', 'amber', 'red')),
+  summary text,
+  action_recommended text,
+  created_at timestamptz default now()
+);
+```
 
 ---
 
 ## 🚀 Quick Start Guide
 
 ### 1. Prerequisites
-- Node.js (v18+) & Python (v3.10+)
-- Google Gemini API key from [Google AI Studio](https://aistudio.google.com/)
-- Free [Supabase](https://supabase.com/) project
+- Node.js (v18+)
+- Python (v3.10+)
 
-### 2. Backend Setup
+### 2. Running Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+# App is available at http://localhost:5173
+```
+
+### 3. Running Backend
 ```bash
 cd backend
 python -m venv .venv
 
 # Windows Powershell:
 .\.venv\Scripts\Activate.ps1
-# Mac/Linux:
+# Mac / Linux:
 # source .venv/bin/activate
 
-pip install fastapi uvicorn python-multipart google-genai gtts pydantic
-
-# Copy environment variables
-cp .env.example .env
-
-# Run backend
+pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
+# API docs available at http://127.0.0.1:8000/docs
 ```
-
-### 3. Frontend Setup
-```bash
-cd frontend
-npm install
-cp .env.example .env
-npm run dev
-```
-
----
-
-## 🔑 Environment Variables
-
-### `backend/.env`
-```env
-GEMINI_API_KEY=your_gemini_api_key_here
-GEMINI_MODEL=gemini-2.0-flash
-ALLOWED_ORIGINS=http://localhost:5173,https://healwise.vercel.app
-```
-
-### `frontend/.env`
-```env
-VITE_API_URL=http://localhost:8000
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
-```
-
----
-
-## 📡 API Endpoints
-
-### 1. `POST /analyze`
-- **Description**: Parses prescription image into structured medical plan.
-- **Request**: `multipart/form-data` with `file: UploadFile`, `lang: str` (e.g., `Hindi`, `Marathi`)
-- **Response**:
-```json
-{
-  "original_text": "Tab Paracetamol 650mg TDS x 3d pc",
-  "diagnosis": "Viral fever with body ache",
-  "medicines": [
-    {
-      "name": "Paracetamol 650mg",
-      "generic_name": "Paracetamol",
-      "dose": "650mg",
-      "times": ["morning", "afternoon", "night"],
-      "with_food": "after",
-      "duration_days": 3,
-      "purpose": "बुखार और बदन दर्द कम करने के लिए"
-    }
-  ],
-  "interactions": [],
-  "warnings": ["Do not exceed 3 tablets in 24 hours"],
-  "summary": "यह दवा बुखार कम करने के लिए है। खाना खाने के बाद लें।"
-}
-```
-
-### 2. `GET /tts`
-- **Description**: Streams MP3 audio directly for any text string.
-- **Query Params**: `text` (URL encoded string), `lang` (`hi`, `mr`, `ta`, `te`, `en`)
-- **Usage in React**: `<audio controls src="${API_URL}/tts?text=${encodeURIComponent(text)}&lang=hi" />`
-
-### 3. `POST /checkin-questions`
-- **Description**: Generates doctor-reviewable check-in questions with mixed formats (Yes/No & progression).
-- **Request Body**:
-```json
-{
-  "prescription": { ... },
-  "lang": "Hindi"
-}
-```
-- **Response**:
-```json
-{
-  "questions": [
-    { "id": "q1", "text": "क्या बुखार में सुधार हुआ है?", "type": "progression", "options": ["Better", "Same", "Worse"] },
-    { "id": "q2", "text": "क्या पेट में कोई जलन या उल्टी महसूस हो रही है?", "type": "boolean", "options": ["Yes", "No"] }
-  ]
-}
-```
-
-### 4. `POST /summarize`
-- **Description**: Evaluates patient check-in responses; triggers escalation when answers are `"Same"` or `"Worse"`.
-- **Response**:
-```json
-{
-  "status": "amber",
-  "summary": "Patient reports persistent fever (Same) with mild dizziness on Day 2.",
-  "follow_up_recommended": true
-}
-```
-
----
-
-## 🗄️ Database Schema (Supabase)
-
-```sql
-create table profiles (
-  id uuid primary key references auth.users on delete cascade,
-  name text not null,
-  role text check (role in ('doctor','patient')) not null,
-  language text default 'Hindi',
-  created_at timestamptz default now()
-);
-
-create table prescriptions (
-  id uuid primary key default gen_random_uuid(),
-  doctor_id uuid references profiles(id),
-  patient_id uuid references profiles(id),
-  data jsonb not null,
-  questions jsonb,
-  start_date date default current_date,
-  created_at timestamptz default now()
-);
-
-create table checkins (
-  id uuid primary key default gen_random_uuid(),
-  prescription_id uuid references prescriptions(id) on delete cascade,
-  answers jsonb not null,
-  status text check (status in ('green', 'amber', 'red')),
-  summary text,
-  created_at timestamptz default now()
-);
-```
-
----
-
-## 🛡️ Critical Flaws Addressed & Guardrails
-
-| Flaw / Edge Case | Impact | Solution Implemented |
-|---|---|---|
-| **Audio via POST** | Standard `<audio>` tag cannot play form POSTs | Changed to `GET /tts?text=...&lang=...` for native streaming |
-| **Inflexible "Better/Same/Worse"** | Cannot answer side-effect questions | Mixed schema: `Yes/No` for side-effects + `Better/Same/Worse` for symptoms + adaptive drilldown on `Worse` |
-| **Auth Failures during Demo** | Supabase default email confirmation halts sign-up | Built-in 1-click **Demo Switcher Bar** to jump between Doctor and Patient sessions instantly |
-| **Calendar `NaN` / Bad Timing** | String `duration_days` or unrecognized time keywords crash calendar | Safe time mapper supporting `morning`, `afternoon`, `evening`, `night`, `bedtime`, `SOS` with integer coercion |
-| **Gemini JSON Markdown Wrapping** | `json.loads()` errors on ````json ... ```` formatting | Backend regex strip before JSON decoding with fallback parser |
-| **Vercel Client-Side 404s** | Direct navigation to `/doctor` or `/patient` causes 404 | Included `vercel.json` rewrite configuration |
-| **Render Cold Starts** | 60-second delay during live judging | Pre-load 2 sample prescriptions locally in frontend + wake-up ping script |
-
----
-
-## 👥 Hackathon Team Split
-- **Frontend Lead**: Vite React setup, UI Components (Medicine Cards, Calendar, Check-in Form), Mobile layout, Demo switcher.
-- **Backend & AI Lead**: FastAPI routes, Gemini prompt engineering, Supabase queries, gTTS pipeline, deployment & CORS.
